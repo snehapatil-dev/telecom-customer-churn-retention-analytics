@@ -128,7 +128,7 @@ flowchart LR
 ## 💻 Tech Stack & Tools
 
 - **Business Intelligence**: Microsoft Power BI Desktop, DAX, Power Query (M Language)
-- **Database & Query Modeling**: MySQL 8.0, MySQL Workbench (InnoDB, CTEs, Window Functions, Views)
+- **Database & Query Modeling**: MySQL 8.0, MySQL Workbench.
 - **Data Engineering & Analysis**: Python 3.11 (Pandas, NumPy, Scipy)
 - **Spreadsheets**: Microsoft Excel (Data inspection & validation checks)
 
