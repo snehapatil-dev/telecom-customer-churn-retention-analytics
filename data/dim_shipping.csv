@@ -1,0 +1,5 @@
+Ship_Mode_ID,Ship Mode,Target_SLA_Days,Priority_Level
+1,Same Day,0,Ultra Expedited
+2,First Class,2,Express
+3,Second Class,3,Standard Plus
+4,Standard Class,5,Ground Economy

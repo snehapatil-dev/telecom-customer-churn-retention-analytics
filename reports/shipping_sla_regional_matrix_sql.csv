@@ -1,0 +1,17 @@
+Region,Ship Mode,Total_Shipments,Delayed_Shipments,SLA_Breach_Rate_Pct,On_Time_Fulfillment_Pct
+Central,First Class,299,151,50.5,49.5
+Central,Same Day,120,4,3.33,96.67
+Central,Second Class,465,220,47.31,52.69
+Central,Standard Class,1439,443,30.79,69.21
+East,First Class,490,193,39.39,60.61
+East,Same Day,155,0,0.0,100.0
+East,Second Class,530,219,41.32,58.68
+East,Standard Class,1673,496,29.65,70.35
+South,First Class,234,90,38.46,61.54
+South,Same Day,83,1,1.2,98.8
+South,Second Class,329,123,37.39,62.61
+South,Standard Class,974,284,29.16,70.84
+West,First Class,521,194,37.24,62.76
+West,Same Day,186,19,10.22,89.78
+West,Second Class,628,242,38.54,61.46
+West,Standard Class,1907,609,31.93,68.07

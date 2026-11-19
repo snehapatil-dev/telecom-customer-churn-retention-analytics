@@ -1,0 +1,191 @@
+// ==============================================================================
+// PROJECT 2: ENTERPRISE RETAIL SALES, PROFITABILITY & SUPPLY CHAIN ANALYTICS
+// Comprehensive DAX Measures Library for Microsoft Power BI Desktop
+// ==============================================================================
+
+// ------------------------------------------------------------------------------
+// TABLE 1: [ _Measures_Commercial_KPIs ]
+// ------------------------------------------------------------------------------
+
+Total Sales = 
+SUM('fact_sales_orders'[Sales])
+
+Total Profit = 
+SUM('fact_sales_orders'[Profit])
+
+Profit Margin % = 
+DIVIDE([Total Profit], [Total Sales], 0)
+
+Total Quantity Sold = 
+SUM('fact_sales_orders'[Quantity])
+
+Total Orders = 
+DISTINCTCOUNT('fact_sales_orders'[Order ID])
+
+Total Transactions = 
+COUNTROWS('fact_sales_orders')
+
+Total Customers = 
+DISTINCTCOUNT('fact_sales_orders'[Customer ID])
+
+Average Order Value (AOV) = 
+DIVIDE([Total Sales], [Total Orders], 0)
+
+Average Unit Price = 
+DIVIDE([Total Sales], [Total Quantity Sold], 0)
+
+// ------------------------------------------------------------------------------
+// TABLE 2: [ _Measures_Profit_Leakage_And_Discounts ]
+// ------------------------------------------------------------------------------
+
+Average Discount % = 
+AVERAGE('fact_sales_orders'[Discount])
+
+Negative Profit Total = 
+CALCULATE(
+    SUM('fact_sales_orders'[Profit]),
+    'fact_sales_orders'[Profit] < 0
+)
+
+Negative Profit Orders Count = 
+CALCULATE(
+    COUNTROWS('fact_sales_orders'),
+    'fact_sales_orders'[Profit] < 0
+)
+
+Negative Profit Orders % = 
+DIVIDE([Negative Profit Orders Count], [Total Transactions], 0)
+
+Discount Leakage Revenue Loss = 
+CALCULATE(
+    SUM('fact_sales_orders'[Profit]),
+    'fact_sales_orders'[Discount_Leakage_Flag] = 1
+)
+
+Discount Leakage Transaction Count = 
+CALCULATE(
+    COUNTROWS('fact_sales_orders'),
+    'fact_sales_orders'[Discount_Leakage_Flag] = 1
+)
+
+// Dynamic Discount Threshold Simulation (Parameter Value: 0% to 50%)
+Simulated Max Discount Cap = 
+SELECTEDVALUE('Discount_Cap_Parameter'[Parameter Value], 0.20)
+
+Estimated Recovered Margin with Cap = 
+VAR Cap = [Simulated Max Discount Cap]
+RETURN
+    CALCULATE(
+        SUMX(
+            FILTER('fact_sales_orders', 'fact_sales_orders'[Discount] > Cap),
+            ('fact_sales_orders'[Discount] - Cap) * 'fact_sales_orders'[Sales]
+        )
+    )
+
+// ------------------------------------------------------------------------------
+// TABLE 3: [ _Measures_Time_Intelligence_YoY ]
+// ------------------------------------------------------------------------------
+
+Prior Year Sales = 
+CALCULATE(
+    [Total Sales],
+    SAMEPERIODLASTYEAR('fact_sales_orders'[Order Date])
+)
+
+YoY Sales Growth $ = 
+[Total Sales] - [Prior Year Sales]
+
+YoY Sales Growth % = 
+DIVIDE([YoY Sales Growth $], [Prior Year Sales], 0)
+
+Prior Year Profit = 
+CALCULATE(
+    [Total Profit],
+    SAMEPERIODLASTYEAR('fact_sales_orders'[Order Date])
+)
+
+YoY Profit Growth $ = 
+[Total Profit] - [Prior Year Profit]
+
+YoY Profit Growth % = 
+DIVIDE([YoY Profit Growth $], ABS([Prior Year Profit]), 0)
+
+// ------------------------------------------------------------------------------
+// TABLE 4: [ _Measures_Customer_RFM_And_Retention ]
+// ------------------------------------------------------------------------------
+
+Champion Customers Count = 
+CALCULATE(
+    COUNTROWS('dim_customer'),
+    'dim_customer'[RFM_Segment] = "Champions"
+)
+
+At-Risk Customers Count = 
+CALCULATE(
+    COUNTROWS('dim_customer'),
+    'dim_customer'[RFM_Segment] IN {"At Risk / Need Attention", "At Risk High Spenders"}
+)
+
+At-Risk Customer Sales Exposure = 
+CALCULATE(
+    SUM('fact_sales_orders'[Sales]),
+    'dim_customer'[RFM_Segment] IN {"At Risk / Need Attention", "At Risk High Spenders"}
+)
+
+Top 10% CLV Revenue Contribution % = 
+CALCULATE(
+    DIVIDE(
+        CALCULATE(SUM('dim_customer'[Monetary_Total_Sales]), 'dim_customer'[M_Score] = 5),
+        CALCULATE(SUM('dim_customer'[Monetary_Total_Sales]), ALL('dim_customer')),
+        0
+    )
+)
+
+// ------------------------------------------------------------------------------
+// TABLE 5: [ _Measures_Supply_Chain_SLA ]
+// ------------------------------------------------------------------------------
+
+Average Shipping Days = 
+AVERAGE('fact_sales_orders'[Shipping_Duration_Days])
+
+Delayed Shipments Count = 
+CALCULATE(
+    COUNTROWS('fact_sales_orders'),
+    'fact_sales_orders'[SLA_Breach_Flag] = 1
+)
+
+On-Time Delivery Rate % = 
+1 - DIVIDE([Delayed Shipments Count], [Total Transactions], 0)
+
+Severe Delay Count (3+ Days) = 
+CALCULATE(
+    COUNTROWS('fact_sales_orders'),
+    'fact_sales_orders'[Shipping_SLA_Status] = "Severe Delay (3+ Days)"
+)
+
+// ------------------------------------------------------------------------------
+// TABLE 6: [ _Measures_Pareto_And_Formatting ]
+// ------------------------------------------------------------------------------
+
+Pareto Product Cumulative % = 
+VAR CurrentProductSales = [Total Sales]
+VAR AllProductSales = CALCULATE([Total Sales], ALL('dim_product'))
+VAR CumulativeSales = 
+    CALCULATE(
+        [Total Sales],
+        FILTER(
+            ALL('dim_product'),
+            [Total Sales] >= CurrentProductSales
+        )
+    )
+RETURN
+    DIVIDE(CumulativeSales, AllProductSales, 0)
+
+Profit Margin Health Status = 
+SWITCH(
+    TRUE(),
+    [Profit Margin %] >= 0.20, "🟢 High Profit Margin (" & FORMAT([Profit Margin %], "0.0%") & ")",
+    [Profit Margin %] >= 0.10, "🟡 Moderate Margin (" & FORMAT([Profit Margin %], "0.0%") & ")",
+    [Profit Margin %] >= 0.00, "🟠 Low Margin (" & FORMAT([Profit Margin %], "0.0%") & ")",
+    "🔴 Severe Loss Drain (" & FORMAT([Profit Margin %], "0.0%") & ")"
+)
